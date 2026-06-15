@@ -1,9 +1,9 @@
+```yaml
 name: Placement Tracker
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "*/20 * * * *"
+    - cron: '*/5 * * * *'
 
 jobs:
   run:
@@ -17,8 +17,9 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
+
         with:
-          python-version: "3.13"
+          python-version: '3.13'
 
       - name: Install dependencies
         run: |
@@ -40,3 +41,4 @@ jobs:
       - name: Run application
         run: |
           python main.py
+```
