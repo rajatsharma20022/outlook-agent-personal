@@ -1,3 +1,5 @@
+import time
+
 from email_reader import (
     get_unread_emails,
     mark_as_read
@@ -23,159 +25,185 @@ INVALID_COMPANIES = [
 ]
 
 
-emails = get_unread_emails()
+def process_emails():
 
-if not emails:
-    print("No unread emails found.")
-    exit()
+    emails = get_unread_emails()
 
-for email in emails:
+    if not emails:
 
-    email_id = email["id"]
-    email_text = email["body"]
+        print("No unread emails found.")
 
-    print("\n==========================")
-    print("EMAIL:")
-    print(email_text[:500])
+        return
 
-    if not is_placement_email(email_text):
+    for email in emails:
 
-        print("Skipped: Not a placement email")
+        email_id = email["id"]
+        email_text = email["body"]
 
-        mark_as_read(email_id)
+        print("\n==========================")
+        print("EMAIL:")
+        print(email_text[:500])
 
-        continue
+        if not is_placement_email(email_text):
 
-    try:
+            print("Skipped: Not a placement email")
 
-        data = extract_placement_info(email_text)
+            mark_as_read(email_id)
 
-        print("\nPARSED:")
-        print(data)
+            continue
 
-        # Handle multiple jobs
-        if isinstance(data, list):
+        try:
 
-            print("Multiple jobs found")
+            data = extract_placement_info(email_text)
 
-            for job in data:
+            print("\nPARSED:")
+            print(data)
 
-                company = job.get("company")
+            # Handle multiple jobs
+            if isinstance(data, list):
 
-                if not company:
-                    continue
+                print("Multiple jobs found")
 
-                if company in INVALID_COMPANIES:
-                    print(f"Skipping invalid company: {company}")
-                    continue
+                for job in data:
 
-                if len(company) > 30:
-                    print(f"Skipping suspicious company: {company}")
-                    continue
+                    company = job.get("company")
 
-                page_id = find_company(company)
+                    if not company:
+                        continue
 
-                if page_id:
+                    if company in INVALID_COMPANIES:
 
-                    print(f"Updating {company}")
+                        print(
+                            f"Skipping invalid company: {company}"
+                        )
 
-                    update_company(
-                        page_id,
-                        job
-                    )
+                        continue
 
-                else:
+                    if len(company) > 30:
 
-                    print(f"Creating {company}")
+                        print(
+                            f"Skipping suspicious company: {company}"
+                        )
 
-                    create_company(job)
+                        continue
+
+                    page_id = find_company(company)
+
+                    if page_id:
+
+                        print(f"Updating {company}")
+
+                        update_company(
+                            page_id,
+                            job
+                        )
+
+                    else:
+
+                        print(f"Creating {company}")
+
+                        create_company(job)
+
+                mark_as_read(email_id)
+
+                print("Marked as read")
+                print("Done")
+
+                continue
+
+            # No company found
+            if not data.get("company"):
+
+                print("No company found")
+
+                mark_as_read(email_id)
+
+                continue
+
+            company = data["company"].strip()
+
+            # Invalid company names
+            if company in INVALID_COMPANIES:
+
+                print(
+                    f"Invalid company name: {company}"
+                )
+
+                mark_as_read(email_id)
+
+                continue
+
+            # Very long company names
+            if len(company) > 30:
+
+                print(
+                    f"Suspicious company name: {company}"
+                )
+
+                mark_as_read(email_id)
+
+                continue
+
+            # Promotional emails
+            if data.get("category") == "Product Promotion":
+
+                print(
+                    "Skipped: Promotional email"
+                )
+
+                mark_as_read(email_id)
+
+                continue
+
+            page_id = find_company(company)
+
+            if page_id:
+
+                print(
+                    "Company already exists"
+                )
+
+                print(
+                    "Updating record..."
+                )
+
+                update_company(
+                    page_id,
+                    data
+                )
+
+            else:
+
+                print(
+                    "New company found"
+                )
+
+                print(
+                    "Creating record..."
+                )
+
+                create_company(data)
 
             mark_as_read(email_id)
 
             print("Marked as read")
             print("Done")
 
-            continue
+        except Exception as e:
 
-        # No company found
-        if not data.get("company"):
+            print("ERROR:")
 
-            print("No company found")
+            print(str(e))
 
-            mark_as_read(email_id)
 
-            continue
+while True:
 
-        company = data["company"].strip()
+    print("\n====================================")
 
-        # Invalid company names
-        if company in INVALID_COMPANIES:
+    print("Checking Gmail for new emails...")
 
-            print(
-                f"Invalid company name: {company}"
-            )
+    process_emails()
 
-            mark_as_read(email_id)
+    print("Sleeping for 5 minutes...")
 
-            continue
-
-        # Very long company names usually mean bad parsing
-        if len(company) > 30:
-
-            print(
-                f"Suspicious company name: {company}"
-            )
-
-            mark_as_read(email_id)
-
-            continue
-
-        # Promotional emails
-        if data.get("category") == "Product Promotion":
-
-            print(
-                "Skipped: Promotional email"
-            )
-
-            mark_as_read(email_id)
-
-            continue
-
-        page_id = find_company(company)
-
-        if page_id:
-
-            print(
-                "Company already exists"
-            )
-
-            print(
-                "Updating record..."
-            )
-
-            update_company(
-                page_id,
-                data
-            )
-
-        else:
-
-            print(
-                "New company found"
-            )
-
-            print(
-                "Creating record..."
-            )
-
-            create_company(data)
-
-        mark_as_read(email_id)
-
-        print("Marked as read")
-        print("Done")
-
-    except Exception as e:
-
-        print("ERROR:")
-        print(str(e))
+    time.sleep(300)
