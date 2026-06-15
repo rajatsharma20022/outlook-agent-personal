@@ -1,22 +1,19 @@
 name: Placement Tracker
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/10 * * * *'
 
 jobs:
   run:
-
     runs-on: ubuntu-latest
-
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
-
         with:
           python-version: '3.13'
 
@@ -27,15 +24,21 @@ jobs:
 
       - name: Create .env
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
+          cat > .env << 'EOF'
+          ${{ secrets.ENV_FILE }}
+          EOF
 
       - name: Create credentials.json
         run: |
-          echo '${{ secrets.GMAIL_CREDENTIALS }}' > credentials.json
+          cat > credentials.json << 'EOF'
+          ${{ secrets.GMAIL_CREDENTIALS }}
+          EOF
 
       - name: Create token.json
         run: |
-          echo '${{ secrets.GMAIL_TOKEN }}' > token.json
+          cat > token.json << 'EOF'
+          ${{ secrets.GMAIL_TOKEN }}
+          EOF
 
       - name: Run application
         run: |
