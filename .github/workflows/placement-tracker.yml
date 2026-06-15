@@ -1,0 +1,43 @@
+name: Placement Tracker
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: '*/10 * * * *'
+
+jobs:
+  run:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create .env
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Create credentials.json
+        run: |
+          echo '${{ secrets.GMAIL_CREDENTIALS }}' > credentials.json
+
+      - name: Create token.json
+        run: |
+          echo '${{ secrets.GMAIL_TOKEN }}' > token.json
+
+      - name: Run application
+        run: |
+          python main.py
