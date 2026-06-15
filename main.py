@@ -196,7 +196,7 @@ def process_emails():
             print(str(e))
 
 
-while True:
+if __name__ == "__main__":
 
     print("\n====================================")
 
@@ -204,6 +204,4 @@ while True:
 
     process_emails()
 
-    print("Sleeping for 5 minutes...")
-
-    time.sleep(300)
+    print("Done")
